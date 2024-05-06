@@ -1,0 +1,128 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import netCDF4 as nc
+import itertools
+from scipy.stats import pearsonr
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+
+
+# Parameter combination
+
+cs = 420 
+alpha = 8
+gamma = 0.2
+beta = 0.8
+c_m = 1.5
+et_weights = (0.75, 0.25)
+
+def calc_et_weight(temp, lai, w):
+    """Calculate influence of LAI and temperature on ET."""
+    # Get coefficients for temperature and lai
+    temp_w, lai_w = w
+
+    # Scale data
+    data = pd.DataFrame({'temp': temp, 'lai': lai})
+    scale = MinMaxScaler()
+    scaled_data = pd.DataFrame(scale.fit_transform(data), columns=data.columns)
+
+    # Weight Temperature and LAI
+    et_coef = temp_w * scaled_data['temp'] + lai_w * scaled_data['lai']
+
+    return np.asarray(et_coef)
+
+
+def runoff(wn, Pn, cs, alpha):
+    return Pn * (wn / cs) ** alpha
+
+
+def evapotranspiration(wn, Rn, cs, beta, gamma):
+    return beta * (wn / cs) ** gamma * Rn
+
+
+def snow_function(Snow_n, P_n, T_n,
+        c_m):  # Returns 1. Amount of snow after a time step and 2. Amount of water coming into the soil (liquid rain and/or melting snow)
+    if T_n <= 273.15:  # Snow stays on the ground
+        return Snow_n + P_n, 0
+    elif Snow_n < 0.001:  # no accumulated snow and temperature above 0 degrees -> return "0 accumulated snow" and treat precipitation as rain
+        return 0, P_n
+    else:  # Snow is melting (if there was snow)
+        SnowMelt = c_m * (T_n - 273.15)  # Amount of snow melting (if there was)
+        if SnowMelt > Snow_n:  # Is the amount of snow that would melt larger than the existing amount of snow?
+            return 0, Snow_n + P_n  # no snow remains, all existing snow melts
+        else:
+            return Snow_n - SnowMelt, SnowMelt + P_n  # Some snow remains, some snow melts
+
+
+def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
+    snow, Pn = snow_function(Snown, Pn, Tn,
+                             c_m)  # overwrites the precipitation (if snow melts or precipitation is accumulated as snow)
+    Qn = runoff(wn, Pn, cs, alpha)
+    En = evapotranspiration(wn, Rn, cs, beta, gamma)
+    w_next = wn + (Pn - En - Qn)
+    w_next = max(0, w_next)
+    return Qn, En, w_next, snow
+
+def snow_function(Snow_n, P_n, T_n,
+        c_m):  # Returns 1. Amount of snow after a time step and 2. Amount of water coming into the soil (liquid rain and/or melting snow)
+    if T_n <= 273.15:  # Snow stays on the ground
+        return Snow_n + P_n, 0
+    elif Snow_n < 0.001:  # no accumulated snow and temperature above 0 degrees -> return "0 accumulated snow" and treat precipitation as rain
+        return 0, P_n
+    else:  # Snow is melting (if there was snow)
+        SnowMelt = c_m * (T_n - 273.15)  # Amount of snow melting (if there was)
+        if SnowMelt > Snow_n:  # Is the amount of snow that would melt larger than the existing amount of snow?
+            return 0, Snow_n + P_n  # no snow remains, all existing snow melts
+        else:
+            return Snow_n - SnowMelt, SnowMelt + P_n  # Some snow remains, some snow melts
+        
+
+def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
+    snow, Pn = snow_function(Snown, Pn, Tn,
+                             c_m)  # overwrites the precipitation (if snow melts or precipitation is accumulated as snow)
+    Qn = runoff(wn, Pn, cs, alpha)
+    En = evapotranspiration(wn, Rn, cs, beta, gamma)
+    w_next = wn + (Pn - En - Qn)
+    w_next = max(0, w_next)
+    return Qn, En, w_next, snow
+
+
+def time_evolution(P_data, R_data, T_data, lai_data, cs, alpha,
+        gamma, beta, c_m, et_weight):
+    """Calculates the time evolution of the soil moisture, runoff and evapotranspiration.
+    Input:  w_0: initial soil moisture [mm]
+            P_data: precipitation data [m/day]
+            R_data: net radiation data [J/day/m**2]
+            Snow_0: initial Snow amount [mm] (equivalent amount of water)
+            T_data: temperature []
+            cs: Soil water holding capacity [mm]
+            alpha: runoff parameter
+            beta: evapotranspiration parameter
+            gamma: evapotranspiration parameter
+            c_m: snow melt parameter [mm/K/day]
+            Output: DataFrame with columns: time, Rn, Pr, calculated_soil_moisture, runoff, evapotranspiration"""
+    w_0 = 0.9 * cs
+    Snow_0 = 0
+    conv = 1 / 2260000  # from J/day/m**2 to mm/day
+    R_data = R_data * conv
+    P_data = P_data * 10 ** 3  # from m/day to mm/day
+    output_df = pd.DataFrame(
+        columns=['time', 'R', 'P', 'calculated_soil_moisture', 'runoff',
+                 'evapotranspiration', 'snow', 'Temperature', 'LAI'])
+
+    # Precompute ET parameter
+    et_coefs = beta * calc_et_weight(T_data, lai_data, et_weight)
+
+    for t in range(1, len(P_data) + 1):
+        P = P_data[t - 1]
+        R = R_data[t - 1]
+        T = T_data[t - 1]
+        et_coef = et_coefs[t - 1]
+        lai = lai_data[t - 1]
+        q, e, w, snow = water_balance(w_0, P, R, Snow_0, T, cs, alpha,
+                                      et_coef, gamma, c_m)
+        output_df.loc[t - 1] = t, R, P, w_0, q, e, snow, T, lai
+        w_0 = w
+        Snow_0 = snow
+
+    return output_df
