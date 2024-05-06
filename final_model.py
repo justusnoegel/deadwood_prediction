@@ -63,28 +63,6 @@ def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
     w_next = max(0, w_next)
     return Qn, En, w_next, snow
 
-def snow_function(Snow_n, P_n, T_n,
-        c_m):  # Returns 1. Amount of snow after a time step and 2. Amount of water coming into the soil (liquid rain and/or melting snow)
-    if T_n <= 273.15:  # Snow stays on the ground
-        return Snow_n + P_n, 0
-    elif Snow_n < 0.001:  # no accumulated snow and temperature above 0 degrees -> return "0 accumulated snow" and treat precipitation as rain
-        return 0, P_n
-    else:  # Snow is melting (if there was snow)
-        SnowMelt = c_m * (T_n - 273.15)  # Amount of snow melting (if there was)
-        if SnowMelt > Snow_n:  # Is the amount of snow that would melt larger than the existing amount of snow?
-            return 0, Snow_n + P_n  # no snow remains, all existing snow melts
-        else:
-            return Snow_n - SnowMelt, SnowMelt + P_n  # Some snow remains, some snow melts
-        
-
-def water_balance(wn, Pn, Rn, Snown, Tn, cs, alpha, beta, gamma, c_m):
-    snow, Pn = snow_function(Snown, Pn, Tn,
-                             c_m)  # overwrites the precipitation (if snow melts or precipitation is accumulated as snow)
-    Qn = runoff(wn, Pn, cs, alpha)
-    En = evapotranspiration(wn, Rn, cs, beta, gamma)
-    w_next = wn + (Pn - En - Qn)
-    w_next = max(0, w_next)
-    return Qn, En, w_next, snow
 
 
 def time_evolution(P_data, R_data, T_data, lai_data, cs, alpha,
