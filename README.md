@@ -18,5 +18,5 @@ For the model prediction:
 * coarser resolution
 * raster deadwood map
     * option1: take all raster where a deadtree was found 
-    + option2: take the difference 
+    + option2: take the difference between each year 
 
