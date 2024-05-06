@@ -8,7 +8,6 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 
 # Parameter combination
-
 cs = 420 
 alpha = 8
 gamma = 0.2
