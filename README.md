@@ -9,7 +9,7 @@ The final paramenter combination for the model is found in the final_model.py sc
 
 Workflow for the project: 
 1. Analyse water balance evolution for the Harz region
-2. Show significance of soil moisture
+2. Show significance of soil moisture and runoff
 3. Implement a machine learning model (Autogluon) with soil moisture as a predictor.
 4. Further predictors can be included: soil data, NDVI, LAI, climate data
 
