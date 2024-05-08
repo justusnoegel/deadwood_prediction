@@ -1,4 +1,4 @@
-# Deadwood Prediction with Simple Water Balance Model
+# Deadwood Prediction
 
 Aim of this project is, to include the Simple Water Balance Model in order to improve the deadwood prediction. 
 
