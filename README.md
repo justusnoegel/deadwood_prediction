@@ -2,6 +2,8 @@
 
 Aim of this project is, to include the Simple Water Balance Model in order to improve the deadwood prediction. 
 
+How much can soil moisture explain dead wood events?
+
 Workflow for the project: 
 1. Analyse water balance evolution for the Harz region
 2. Show significance of soil moisture 
