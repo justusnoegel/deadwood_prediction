@@ -1,6 +1,6 @@
 # Deadwood Prediction
 
-Aim of this project is, to include the Simple Water Balance Model in order to improve the deadwood prediction. 
+Aim of this project is, to include the Simple Water Balance Model to improve the deadwood prediction. 
 
 How much can soil moisture explain the occurrence of deadwood?
 
