@@ -1,22 +1,12 @@
-# Deadwood Prediction with Simple Water Balance Model
+# Deadwood Prediction
 
-Aim of this project is, to include the Simple Water Balance Model (Source) in order to improve the deadwood prediction. 
+Aim of this project is, to include the Simple Water Balance Model to improve the deadwood prediction. 
 
-The calibration for the Simple Water Balance Model was done for Germany in the following repository: 
-https://github.com/JohannaTrost/MSC24-WBM/tree/main
-
-The final paramenter combination for the model is found in the final_model.py script. 
+How much can soil moisture explain the occurrence of deadwood?
 
 Workflow for the project: 
-1. Analyse water balance evolution for the Harz region
-2. Show significance of soil moisture and runoff
-3. Implement a machine learning model (Autogluon) with soil moisture as a predictor.
-4. Further predictors can be included: soil data, NDVI, LAI, climate data
-
-
-For the model prediction: 
-* coarser resolution
-* raster deadwood map
-    * option1: take all raster where a deadtree was found 
-    + option2: take the difference between each year 
+1. Analyse water balance evolution for the Harz and Black Forest
+2. Show significance of soil moisture 
+3. Implement a machine learning model (Autogluon) with soil moisture as a predictor
+4. Further predictors can be included: soil data, NDVI, LAI, climate data ...
 
